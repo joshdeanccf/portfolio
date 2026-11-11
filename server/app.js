@@ -1,28 +1,88 @@
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import mongoose from "mongoose";
+import { connectToDatabase } from "./db.js";
 import projectRoutes from "./routes/projects.js";
 import contactRoutes from "./routes/contact.js";
 
 const app = express();
+
+// Security headers
 app.use(helmet());
 
-const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+// Allowed frontend origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://jdcf.vercel.app",
+  ...(process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
 
-app.use(cors({ origin: allowedOrigins }));
-app.use(express.json({ limit: "20kb" }));
-app.get("/api/health", (req, res) =>
-  res.json({
-    ok: true,
-    database:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  }),
+// CORS configuration
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
+
+// Parse incoming JSON
+app.use(express.json({ limit: "20kb" }));
+
+// Health check: actually connect to MongoDB
+app.get("/api/health", async (req, res) => {
+  try {
+    await connectToDatabase();
+
+    res.json({
+      ok: true,
+      database:
+        mongoose.connection.readyState === 1
+          ? "connected"
+          : "disconnected",
+    });
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+
+    res.status(503).json({
+      ok: false,
+      database: "disconnected",
+      message: "Database connection failed",
+    });
+  }
+});
+
+// API routes
 app.use("/api/projects", projectRoutes);
 app.use("/api/contact", contactRoutes);
+
+// Handle unknown API routes
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
+  });
+});
+
+// General error handler
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
 
 export default app;
