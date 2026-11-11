@@ -464,26 +464,6 @@ button {
 
 
 
-.title-star {
-
-  font-size: 0.35em;
-
-
-
-  color: #eaa0c5;
-
-
-
-  letter-spacing: 0;
-
-
-
-  animation: spin 24s linear infinite;
-
-}
-
-
-
 @keyframes spin {
 
   to {
@@ -943,32 +923,6 @@ button {
   position: relative;
 
   z-index: 2;
-
-}
-
-
-
-.about-symbol {
-
-  position: absolute;
-
-  top: 24px;
-
-  right: 24px;
-
-  z-index: 2;
-
-  font-size: 120px;
-
-  line-height: 1;
-
-  color: #fff;
-
-  opacity: 0.92;
-
-  animation: spin 24s linear infinite;
-
-  pointer-events: none;
 
 }
 
@@ -2807,13 +2761,6 @@ button {
   .about-visual {
 
     min-height: 310px;
-
-  }
-
-
-
-  .about-symbol {
-    font-size: 96px;
 
   }
 

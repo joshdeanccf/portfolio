@@ -1372,8 +1372,6 @@ function App() {
 
               <span>{profile.lastName}</span>
 
-              <span className="title-star">✳</span>
-
             </motion.div>
 
           </div>
@@ -1511,8 +1509,6 @@ function App() {
                 <AboutCarousel />
 
                 <div className="about-visual-shade" aria-hidden="true" />
-
-                <div className="about-symbol" aria-hidden="true">✳</div>
 
                 <span>THINK / CREATE / BUILD</span>
 
