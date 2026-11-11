@@ -9,6 +9,9 @@ import contactRoutes from "./routes/contact.js";
 
 const app = express();
 
+// Trust one reverse proxy hop (Vercel)
+app.set("trust proxy", 1);
+
 // Security headers
 app.use(helmet());
 
@@ -26,21 +29,30 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests without an Origin header
+      if (!origin) {
         return callback(null, true);
       }
+
+      // Allow configured frontend origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn("CORS blocked origin:", origin);
 
       return callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 204,
   })
 );
 
 // Parse incoming JSON
 app.use(express.json({ limit: "20kb" }));
 
-// Health check: actually connect to MongoDB
+// Health check
 app.get("/api/health", async (req, res) => {
   try {
     await connectToDatabase();
@@ -78,6 +90,13 @@ app.use("/api", (req, res) => {
 // General error handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
+
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "Origin not allowed",
+    });
+  }
 
   res.status(500).json({
     success: false,
